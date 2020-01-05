@@ -19,8 +19,8 @@ with open('CAM_table.txt') as src:
 			list1.pop(-2)
 			#dict1[int(list1[0])]=line.rstrip()
 			dict1.setdefault(int(list1[0]),[])
-			dict1[int(list1[0])].append(list1)
-			dict2=sorted(dict1)
+			dict1[int(list1[0])].append(list1) # - основной словарь, в котором ключ - номер влана, значения - список списков выводов команд.
+			dict2=sorted(dict1) # dict2 - словарь только  с ключами сортированный
 	
 vlannumber=int(input('Введите номер VLAN :'))
 
