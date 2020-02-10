@@ -24,50 +24,75 @@
 Ограничение: Все задания надо выполнять используя только пройденные темы.
 '''
 
+def _parse_interfaces(config_filename):
+    interfaces = []
+    name = ''
+    mode = ''
+    access_vlan = None
+    trunk_encapsulation = None
+    trunk_allowed_vlan = None
+    duplex = 'auto'
+    in_config = False
+    with open(config_filename) as src:
+        for line in src:
+            if line.strip().startswith('interface'):
+                in_config = True
+                name = line.split('interface')[-1].strip()
+            if not in_config:
+                continue
+            elif line.strip().startswith('switchport mode') and in_config:
+                mode = line.split('switchport mode')[-1].strip()
+            elif line.strip().startswith('switchport access vlan') and in_config:
+                access_vlan = int(line.split('switchport access vlan')[-1].strip())
+            elif line.strip().startswith('switchport trunk encapsulation') and in_config:
+                trunk_encapsulation = line.split('switchport trunk encapsulation')[-1].strip()
+            elif line.strip().startswith('switchport trunk allowed vlan') and in_config:
+                trunk_allowed_vlan = [
+                    int(item)
+                    for item in
+                    line.split('switchport trunk allowed vlan')[-1].strip().split(',')
+                ]
+            elif line.strip().startswith('duplex') and in_config:
+                duplex = line.split('duplex')[-1].strip()
+            elif line.strip().startswith('!') and in_config:
+                in_config = False
+                interfaces.append(
+                    {
+                        'name': name,
+                        'mode': mode,
+                        'access_vlan': access_vlan,
+                        'trunk_encapsulation': trunk_encapsulation,
+                        'trunk_allowed_vlan': trunk_allowed_vlan,
+                        'duplex': duplex
+                    }
+                )
+                name = ''
+                mode = ''
+                access_vlan = None
+                trunk_encapsulation = None
+                trunk_allowed_vlan = None
+                duplex = 'auto'
+    return interfaces
+
+
 def get_int_vlan_map(config_filename):
-	'''
-	написать потом
-	'''
-	access_dict={}
-	trunk_dict={}
-	vlan=0
-	with open(config_filename) as src:
-	  for line in src:
-		  #print('its ok 2')
-		  access_port= False
-		  vlan_1_access=False
-		  if 'Ethernet' in line:
-			  interface=line.split()[1]
-			  print(interface)
-			  print(vlan)			  			  
-		  elif 'mode access' in line and access_port:
-			  vlan_1_access = True
-		  elif 'access vlan' in line:
-			  vlan=line.split()[3]
-			  vlan=int(line.split()[3]) 
-			  print(vlan)
-			  access_dict[interface]=vlan
-			  vlan=0
-			  access_port= True
-		  
-		  elif 'allowed vlan' in line:		  
-			  vlans=line.split()[4].split(',')
-			  for i in range(len(vlans)):
-			    vlans[i]=int(vlans[i])
-			  print(vlans)
-			  trunk_dict[interface]=vlans
-			  
-			  
-		  else:
-			  if vlan_1_access and not vlan:
-				  access_dict[interface]=1
-			  else:
-				  continue
-		#sorted(access_dict)
-		#sorted(trunk_dict)
-		
-	dict(sorted(access_dict.items(), key=lambda x: x[0]))
-	dict(sorted(trunk_dict.items(), key=lambda x: x[0]))
-	return (access_dict,trunk_dict)
+    access_dict = {}
+    trunk_dict = {}
+    interfaces = _parse_interfaces(config_filename)
+    for interface in interfaces:
+        key = interface['name']
+        if interface['mode'] == 'access':
+            vlan = interface['access_vlan']
+            if vlan == None:
+				vlan=1
+            access_dict[key] = vlan
+        elif interface['mode'] == 'trunk':
+            vlan = interface['trunk_allowed_vlan']
+            trunk_dict[key] = vlan
+    return access_dict, trunk_dict
 
 print(get_int_vlan_map('config_sw2.txt'))
+
+
+
+
