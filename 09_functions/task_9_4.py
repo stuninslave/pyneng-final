@@ -35,3 +35,46 @@ def ignore_command(command, ignore):
     * False - если нет
     '''
     return any(word in command for word in ignore)
+
+
+def convert_config_to_dict(config_filename):
+	config_dict={}
+	key_command=None
+	list_of_commands=[]
+	global_command=False
+	to_ignore=False
+	with open(config_filename) as src:
+		for line in src:
+			line=line.strip('\n')
+			print(line)
+			to_ignore=False
+			for word in ignore:
+				if word in line:
+					to_ignore=True
+			
+			if line.startswith('!') or to_ignore:
+				print('1.0 >>>>>line ignored')
+				pass					
+			#elif line.startswith(' ') and not global_command:
+			#	continue	
+			elif not line.startswith(' '):
+				key_command=line
+				print('2.0 key command='+key_command)
+				global_command=True
+				list_of_commands=[]
+				print('3.0 global_command=true')				
+			elif line.startswith(' ') and global_command:
+				list_of_commands.append(line[1:])
+				print('4.0 LIST OF COMMANDS\n')
+				print(list_of_commands)
+			
+			if key_command:
+				config_dict[key_command]=list_of_commands
+			
+	return config_dict
+
+print(convert_config_to_dict('config_sw1.txt'))
+
+
+
+				
